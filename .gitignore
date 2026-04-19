@@ -8,3 +8,27 @@ weights/
 *.mp3
 .env
 .DS_Store
+corpus_index.npz
+evidence/
+session-*.jsonl
+session-*.seal.json
+
+# Android
+android/.gradle/
+android/.idea/
+android/build/
+android/app/build/
+android/app/.cxx/
+android/local.properties
+android/captures/
+android/.navigation/
+*.iml
+*.hprof
+*.aab
+*.apk
+*.keystore
+
+# Gradle caches
+.gradle/
+build/
+out/

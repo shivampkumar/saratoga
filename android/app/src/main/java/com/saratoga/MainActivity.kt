@@ -3,6 +3,7 @@ package com.saratoga
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.view.View
 import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
@@ -22,11 +23,17 @@ class MainActivity : AppCompatActivity() {
     private var ready = false
 
     private lateinit var status: TextView
+    private lateinit var statusDot: View
+    private lateinit var statusLabel: TextView
     private lateinit var transcript: TextView
     private lateinit var tau1View: TextView
+    private lateinit var tau1Meta: TextView
     private lateinit var tau3View: TextView
+    private lateinit var tau3Meta: TextView
     private lateinit var tau4View: TextView
+    private lateinit var tau4Meta: TextView
     private lateinit var fhirView: TextView
+    private lateinit var fhirBadge: TextView
     private lateinit var btnLoad: Button
     private lateinit var btnRecord: Button
     private lateinit var btnSync: Button
@@ -38,22 +45,27 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         status = findViewById(R.id.status)
+        statusDot = findViewById(R.id.statusDot)
+        statusLabel = findViewById(R.id.statusLabel)
         transcript = findViewById(R.id.transcript)
-        tau1View = findViewById(R.id.tau1)
-        tau3View = findViewById(R.id.tau3)
-        tau4View = findViewById(R.id.tau4)
+        tau1View = findViewById(R.id.tau1); tau1Meta = findViewById(R.id.tau1Meta)
+        tau3View = findViewById(R.id.tau3); tau3Meta = findViewById(R.id.tau3Meta)
+        tau4View = findViewById(R.id.tau4); tau4Meta = findViewById(R.id.tau4Meta)
         fhirView = findViewById(R.id.fhir)
+        fhirBadge = findViewById(R.id.fhirBadge)
         btnLoad = findViewById(R.id.btnLoad)
         btnRecord = findViewById(R.id.btnRecord)
         btnSync = findViewById(R.id.btnSync)
 
         ensureMicPermission()
+        setStatus("boot", ready = false)
 
         val weightsDir = File(getExternalFilesDir(null), "weights")
         status.text = "weights: $weightsDir"
 
         btnLoad.setOnClickListener {
             btnLoad.isEnabled = false
+            setStatus("loading", busy = true)
             status.text = "loading ASR + embedder + E4B..."
             lifecycleScope.launch {
                 try {
@@ -63,12 +75,15 @@ class MainActivity : AppCompatActivity() {
                     saratoga = Saratoga(this@MainActivity, weightsDir)
                     saratoga.load()
                     val dt = System.currentTimeMillis() - t0
-                    status.text = "loaded in ${dt}ms. press Record to start encounter."
+                    setStatus("ready", ready = true)
+                    status.text = "loaded in ${dt}ms. press RECORD."
+                    btnLoad.visibility = View.GONE
                     btnRecord.isEnabled = true
                     btnSync.isEnabled = true
                     ready = true
                     refreshSync()
                 } catch (e: Throwable) {
+                    setStatus("err", ready = false)
                     status.text = "LOAD FAILED: ${e.message}\n${e.stackTraceToString().take(600)}"
                     btnLoad.isEnabled = true
                 }
@@ -82,10 +97,17 @@ class MainActivity : AppCompatActivity() {
 
         btnSync.setOnClickListener {
             if (!ready) return@setOnClickListener
-            val (n, ids) = saratoga.drainSyncQueue()
-            status.text = "synced $n FHIR bundle(s) -> HAPI stub"
-            fhirView.text = "(drained) ids=${ids.joinToString()}"
-            refreshSync()
+            val n = saratoga.syncQueueSize()
+            if (n == 0) { status.text = "queue empty"; return@setOnClickListener }
+            setStatus("sync", busy = true)
+            status.text = "POST /Bundle × $n → HAPI stub..."
+            lifecycleScope.launch {
+                val (drained, ids) = saratoga.drainSyncQueue()
+                status.text = "✓ synced $drained Bundle(s) → HAPI stub"
+                fhirView.text = "✓ reconciled → ${ids.joinToString(", ")}"
+                refreshSync()
+                setStatus("ready", ready = true)
+            }
         }
     }
 
@@ -93,68 +115,108 @@ class MainActivity : AppCompatActivity() {
         if (ContextCompat.checkSelfPermission(
                 this, Manifest.permission.RECORD_AUDIO
             ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            ensureMicPermission()
-            return
-        }
+        ) { ensureMicPermission(); return }
         recorder.start()
-        btnRecord.text = "Stop"
+        btnRecord.text = "■ STOP"
+        setStatus("rec", rec = true)
         status.text = "recording..."
     }
 
     private fun stopAndProcess() {
         btnRecord.isEnabled = false
-        btnRecord.text = "Record"
+        btnRecord.text = "● RECORD"
+        setStatus("asr", busy = true)
         status.text = "transcribing..."
         lifecycleScope.launch {
             val pcm = recorder.stop()
             val tAsr = System.currentTimeMillis()
-            val text = withContext(Dispatchers.Default) {
-                asr.transcribe(pcm, cacheDir)
-            }
+            val text = withContext(Dispatchers.Default) { asr.transcribe(pcm, cacheDir) }
             val asrMs = System.currentTimeMillis() - tAsr
             if (text.isBlank()) {
                 status.text = "(empty transcript — try again)"
+                setStatus("ready", ready = true)
                 btnRecord.isEnabled = true
                 return@launch
             }
             transcriptLog.append("• ").append(text).append('\n')
             transcript.text = transcriptLog.toString()
 
-            status.text = "reasoning... (asr=${asrMs}ms)"
+            setStatus("think", busy = true)
+            runOnUiThread {
+                tau1View.text = "…"; tau1Meta.text = ""
+                tau3View.text = "…"; tau3Meta.text = ""
+                tau4View.text = "…"; tau4Meta.text = ""
+            }
+            status.text = "asr ${asrMs}ms · RAG gate → LLM..."
             val t0 = System.currentTimeMillis()
-            val out = saratoga.handle(text)
+            val out = saratoga.handle(
+                utterance = text,
+                onQuick = { tau, chunkId, score, preview ->
+                    runOnUiThread {
+                        val (view, meta) = panes(tau)
+                        meta.text = "⚡ quick [$chunkId s=${"%.2f".format(score)}]"
+                        view.text = "$preview\n\n(E4B filling in...)"
+                    }
+                },
+                onSection = { tau, soFar ->
+                    runOnUiThread {
+                        val (view, meta) = panes(tau)
+                        meta.text = "✓ streaming"
+                        view.text = soFar
+                    }
+                },
+            )
             val dt = System.currentTimeMillis() - t0
-            renderOutcome(out, asrMs, dt)
+            finalizeOutcome(out, asrMs, dt)
             btnRecord.isEnabled = true
             refreshSync()
+            setStatus("ready", ready = true)
         }
     }
 
-    private fun renderOutcome(out: Saratoga.Outcome, asrMs: Long, pipelineMs: Long) {
+    private fun panes(tau: String): Pair<TextView, TextView> = when (tau) {
+        "tau1" -> tau1View to tau1Meta
+        "tau3" -> tau3View to tau3Meta
+        else -> tau4View to tau4Meta
+    }
+
+    private fun finalizeOutcome(out: Saratoga.Outcome, asrMs: Long, dt: Long) {
         val fired = out.tasksFired
-        val firedTaus = fired.map { it.tau }.toSet()
+        val firedSet = fired.map { it.tau }.toSet()
         for (tau in listOf("tau1", "tau3", "tau4")) {
-            val view = when (tau) { "tau1" -> tau1View; "tau3" -> tau3View; else -> tau4View }
-            val existing = view.text.toString()
+            val (view, meta) = panes(tau)
             val t = fired.firstOrNull { it.tau == tau }
-            if (t != null) {
-                val top = t.topHit
-                val head = "[${top?.chunk?.id ?: "?"} s=${"%.2f".format(top?.score ?: 0f)}]"
-                view.text = "$head\n${t.card}"
-            } else if (existing.isBlank()) {
-                view.text = "(not triggered)"
+            if (t == null && tau !in firedSet) {
+                meta.text = "not triggered"
+                if (view.text.isNullOrBlank() || view.text == "…") view.text = "—"
+            } else if (t != null) {
+                val s = t.topHit?.score ?: 0f
+                meta.text = "[${t.topHit?.chunk?.id ?: "?"} s=${"%.2f".format(s)}]"
             }
         }
-        val fhirMsg = if (out.fhirBundle != null) "queued ${out.fhirBundle}" else "(no bundle)"
-        status.text =
-            "asr=${asrMs}ms pipe=${pipelineMs}ms  fired=${firedTaus.joinToString(",")}  fhir=$fhirMsg"
+        status.text = "asr=${asrMs}ms  total=${dt}ms  fired=${firedSet.joinToString(",")}"
+        out.fhirBundle?.let {
+            fhirView.text = "⇢ queued $it"
+        }
     }
 
     private fun refreshSync() {
         if (!::saratoga.isInitialized) return
         val n = saratoga.syncQueueSize()
-        btnSync.text = "Sync FHIR ($n)"
+        btnSync.text = "SYNC $n"
+        fhirBadge.text = "$n queued"
+    }
+
+    private fun setStatus(label: String, ready: Boolean = false, rec: Boolean = false, busy: Boolean = false) {
+        statusLabel.text = label
+        statusDot.setBackgroundResource(
+            when {
+                rec -> R.drawable.dot_rec
+                busy -> R.drawable.dot_busy
+                ready -> R.drawable.dot_ready
+                else -> R.drawable.dot_busy
+            }
+        )
     }
 
     private fun ensureMicPermission() {
@@ -162,9 +224,7 @@ class MainActivity : AppCompatActivity() {
                 this, Manifest.permission.RECORD_AUDIO
             ) != PackageManager.PERMISSION_GRANTED
         ) {
-            ActivityCompat.requestPermissions(
-                this, arrayOf(Manifest.permission.RECORD_AUDIO), 42
-            )
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.RECORD_AUDIO), 42)
         }
     }
 

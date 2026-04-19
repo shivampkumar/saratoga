@@ -1,10 +1,12 @@
 package com.saratoga
 
 import android.content.Context
+import com.cactus.CactusTokenCallback
 import com.cactus.cactusComplete
 import com.cactus.cactusDestroy
 import com.cactus.cactusEmbed
 import com.cactus.cactusInit
+import com.cactus.cactusReset
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
@@ -33,6 +35,14 @@ class Saratoga(private val ctx: Context, private val weightsDir: File) {
         val fhirBundle: String? = null
     )
 
+    fun interface OnSection {
+        fun update(tau: String, textSoFar: String)
+    }
+
+    fun interface OnQuick {
+        fun fire(tau: String, chunkId: String, score: Float, preview: String)
+    }
+
     private var embedHandle: Long = 0L
     private var reasonHandle: Long = 0L
     private val chunks = mutableListOf<Chunk>()
@@ -54,31 +64,34 @@ class Saratoga(private val ctx: Context, private val weightsDir: File) {
         "tau4" to "MEDICATION REC",
     )
 
-    private val taskSystems = mapOf(
-        "tau1" to (
-            "You are Saratoga, an on-device clinical co-pilot. Based on the clinician/patient " +
-                "transcript and retrieved guideline chunks, produce a ranked DIFFERENTIAL with " +
-                "3-5 must-rule-out items. Format exactly:\n" +
-                "DDX:\n1. <condition> — <key feature>\n2. ...\n" +
-                "MUST-RULE-OUT: <bulleted top 3>\n" +
-                "Cite chunk ids in brackets. Under 120 words."
-        ),
-        "tau3" to (
-            "You are Saratoga. A red-flag condition is suspected from the transcript and guideline " +
-                "chunks. Emit ONE concise alert in this format:\n" +
-                "ALERT: <condition>\n" +
-                "ACTION: <3 bullet actions, guideline-directed>\n" +
-                "Cite chunk id. Under 80 words."
-        ),
-        "tau4" to (
-            "You are Saratoga. Given the transcript and medication guideline chunks, flag ONE " +
-                "most important interaction / Beers / renal / missing-therapy issue. Format:\n" +
-                "MED FLAG: <drug(s)>\n" +
-                "RISK: <one line>\n" +
-                "ACTION: <one line>\n" +
-                "Cite chunk id. Under 60 words."
-        ),
-    )
+    private val combinedSystem = """
+        You are Saratoga, an on-device clinical co-pilot. A clinician is seeing a patient.
+        Given the transcript and retrieved guideline chunks for up to three tasks, emit
+        EXACTLY these three sections (in this order). Use 'none' for any section with no
+        relevant chunks provided. Cite chunk ids in [brackets].
+
+        ## DDX
+        1. <condition> — <key feature> [chunk_id]
+        2. <condition> — <key feature> [chunk_id]
+        3. <condition> — <key feature> [chunk_id]
+        MUST-RULE-OUT:
+        * <item> [chunk_id]
+        * <item> [chunk_id]
+
+        ## RED FLAG
+        ALERT: <condition> [chunk_id]
+        ACTION:
+        * <bullet>
+        * <bullet>
+        * <bullet>
+
+        ## MED REC
+        MED FLAG: <drug(s)>
+        RISK: <one line> [chunk_id]
+        ACTION: <one line>
+
+        Under 220 words total. No preamble. No disclaimers.
+    """.trimIndent()
 
     init {
         val dir = File(ctx.filesDir, "evidence").apply { mkdirs() }
@@ -134,36 +147,100 @@ class Saratoga(private val ctx: Context, private val weightsDir: File) {
             .mapValues { (_, lst) -> lst.sortedByDescending { it.score }.take(perTauK) }
     }
 
-    private fun composeTask(
-        tau: String,
+    private fun composeAllStreaming(
         utterance: String,
-        hits: List<Hit>,
-    ): String {
-        val cards = hits.take(3).joinToString("\n") {
-            "- [${it.chunk.id}] ${it.chunk.text.take(240)}"
-        }
-        val system = taskSystems[tau]
-            ?: return "(unknown task $tau)"
-        val user = "Transcript so far:\n\"$utterance\"\n\nGuideline chunks:\n$cards\n\nEmit one response."
+        perTau: Map<String, List<Hit>>,
+        firedTaus: Set<String>,
+        onSection: OnSection?,
+    ): Map<String, String> {
+        val labels = mapOf(
+            "tau1" to "Differential chunks",
+            "tau3" to "Red-flag chunks",
+            "tau4" to "Medication chunks",
+        )
+        val blocks = firedTaus.map { tau ->
+            val hits = perTau[tau].orEmpty().take(2)
+            val lines = hits.joinToString("\n") { "- [${it.chunk.id}] ${it.chunk.text.take(180)}" }
+            "${labels[tau]}:\n$lines"
+        }.joinToString("\n\n")
+        val user = "Transcript:\n\"$utterance\"\n\n$blocks\n\nEmit the three sections."
         val messages = JSONArray()
-            .put(JSONObject().put("role", "system").put("content", system))
+            .put(JSONObject().put("role", "system").put("content", combinedSystem))
             .put(JSONObject().put("role", "user").put("content", user))
-        val opts = JSONObject().put("max_tokens", 220).put("temperature", 0.2).toString()
-        val raw = cactusComplete(reasonHandle, messages.toString(), opts, null, null)
-        return JSONObject(raw).optString("response").trim()
+        val opts = JSONObject().put("max_tokens", 260).put("temperature", 0.2).toString()
+
+        val buf = StringBuilder()
+        val headerRe = Regex("(?m)^##\\s+(DDX|RED FLAG|MED REC)\\s*$")
+        val cb = if (onSection != null) CactusTokenCallback { token, _ ->
+            buf.append(token)
+            val full = buf.toString()
+            val matches = headerRe.findAll(full).toList()
+            if (matches.isEmpty()) return@CactusTokenCallback
+            val last = matches.last()
+            val tau = headerToTau(last.groupValues[1]) ?: return@CactusTokenCallback
+            if (tau !in firedTaus) return@CactusTokenCallback
+            val body = full.substring(last.range.last + 1).trim()
+            if (body.isNotEmpty()) onSection.update(tau, body)
+        } else null
+
+        cactusReset(reasonHandle)
+        cactusComplete(reasonHandle, messages.toString(), opts, null, cb)
+        return parseSections(buf.toString(), firedTaus)
     }
 
-    suspend fun handle(utterance: String): Outcome = withContext(Dispatchers.Default) {
+    private fun headerToTau(h: String): String? = when (h) {
+        "DDX" -> "tau1"
+        "RED FLAG" -> "tau3"
+        "MED REC" -> "tau4"
+        else -> null
+    }
+
+    private fun parseSections(text: String, firedTaus: Set<String>): Map<String, String> {
+        val out = mutableMapOf<String, String>()
+        val regex = Regex("(?m)^##\\s+(DDX|RED FLAG|MED REC)\\s*$")
+        val matches = regex.findAll(text).toList()
+        for ((i, m) in matches.withIndex()) {
+            val header = m.groupValues[1]
+            val tau = when (header) {
+                "DDX" -> "tau1"
+                "RED FLAG" -> "tau3"
+                "MED REC" -> "tau4"
+                else -> continue
+            }
+            if (tau !in firedTaus) continue
+            val start = m.range.last + 1
+            val end = if (i + 1 < matches.size) matches[i + 1].range.first else text.length
+            val body = text.substring(start, end).trim()
+            if (body.isNotBlank() && !body.equals("none", ignoreCase = true)) out[tau] = body
+        }
+        return out
+    }
+
+    suspend fun handle(
+        utterance: String,
+        onQuick: OnQuick? = null,
+        onSection: OnSection? = null,
+    ): Outcome = withContext(Dispatchers.Default) {
         appendLog("transcript", utterance)
         val perTau = ragTopPerTau(utterance)
-        val fired = mutableListOf<TaskOutput>()
-        for ((tau, hits) in perTau) {
-            val top = hits.firstOrNull() ?: continue
-            val gate = gateThresholds[tau] ?: 0.5f
-            if (top.score < gate) continue
-            val card = composeTask(tau, utterance, hits)
+        val firedTaus = perTau.entries
+            .filter { it.value.isNotEmpty() && it.value[0].score >= (gateThresholds[it.key] ?: 0.5f) }
+            .map { it.key }.toSet()
+        // Stage 1 (sub-second): fire quick previews from RAG hits alone.
+        for (tau in firedTaus) {
+            val top = perTau[tau]!!.first()
+            val preview = top.chunk.text.take(160)
+            appendLog("quick:$tau", "${top.chunk.id} s=${"%.2f".format(top.score)}")
+            onQuick?.fire(tau, top.chunk.id, top.score, preview)
+        }
+        val cards = if (firedTaus.isNotEmpty())
+            composeAllStreaming(utterance, perTau, firedTaus, onSection)
+        else emptyMap()
+        val fired = firedTaus.mapNotNull { tau ->
+            val card = cards[tau] ?: return@mapNotNull null
+            val top = perTau[tau]?.firstOrNull()
             appendLog("task:$tau", card)
-            fired.add(TaskOutput(tau, card, top))
+            TaskOutput(tau, card, top)
         }
         val bundle = if (fired.isNotEmpty()) emitFhirBundle(utterance, fired) else null
         Outcome(fired, bundle)
