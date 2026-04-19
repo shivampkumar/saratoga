@@ -4,6 +4,7 @@ deck/*.key
 deck/*.pptx
 deck/drafts/
 notes/
+scenarios_real.md
 
 __pycache__/
 *.pyc
