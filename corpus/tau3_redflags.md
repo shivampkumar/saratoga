@@ -44,6 +44,16 @@ Sources: Surviving Sepsis Campaign 2021, AHA/ACC STEMI, AHA Stroke Guidelines, A
 
 ---
 
+## rf_rising_cea_post_resection
+**RISING CEA + BLEEDING IN COLORECTAL SURVIVOR.** CEA ≥5 ng/mL or rising trend × 2 consecutive draws in a patient post-curative-intent resection: 80% sensitivity for recurrence before radiographic detection. Add bleeding and time-to-workup compresses: **colonoscopy + CT A/P within 2 weeks, consider PET-CT if imaging equivocal, referral to surgical oncology if local recurrence found**. Source: NCCN Colon Cancer Survivorship, ASCO CEA guideline.
+
+---
+
+## rf_cardiotoxicity_in_survivor
+**CHEMOTHERAPY CARDIOTOXICITY RED FLAG IN SURVIVOR.** Any new dyspnea / reduced exercise tolerance / orthopnea / LE edema in a breast / lymphoma survivor with prior anthracycline or trastuzumab = concern for chemo-induced cardiomyopathy. ACTION: ECG, BNP, echocardiogram for LVEF. If LVEF <50% or ≥10% drop from baseline → cardio-oncology referral, consider ACEi + beta blocker per HFSA guideline. Lifelong risk; persists decades post-therapy.
+
+---
+
 ## rf_gi_bleed
 **ACUTE GI BLEED.** Hematemesis / melena / hematochezia + tachycardia or hypotension = hemodynamically significant. Management: (1) 2 large-bore IV; (2) type & cross 4 units; (3) transfuse if Hgb<7 (or <8 if cardiac); (4) IV PPI bolus + drip if UGIB suspected; (5) octreotide if variceal source; (6) GI consult for endoscopy <24h. NG lavage not routine.
 

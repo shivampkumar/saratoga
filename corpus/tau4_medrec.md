@@ -56,6 +56,16 @@ Sources: 2023 AGS Beers Criteria, DailyMed, WHO Essential Medicines, Lexicomp-st
 
 ---
 
+## med_asa_discontinued_cancer_survivor
+**Aspirin discontinued in cancer / cardiovascular survivor**: nosebleed alone rarely justifies stopping ASA indicated for secondary prevention or oncologic benefit. In colorectal cancer survivors, aspirin associated with reduced recurrence (observational + CALGB/SWOG 80702 ongoing). Document shared decision-making; reassess CHADS-VASc + HAS-BLED; consider resumption pending endoscopy if bleeding source is non-life-threatening (epistaxis, hemorrhoids).
+
+---
+
+## med_tamoxifen_cyp2d6
+**Tamoxifen + CYP2D6 inhibitors** (paroxetine, fluoxetine, bupropion, duloxetine, some antiarrhythmics) reduces conversion to active endoxifen → decreased breast-cancer recurrence protection. AVOID these SSRIs in patients on tamoxifen; prefer venlafaxine, citalopram, escitalopram, sertraline for hot flashes or mood in tamoxifen-treated survivors.
+
+---
+
 ## med_opioid_red_flags
 **Opioid prescribing red flags**: concurrent benzodiazepine (respiratory depression, 10× overdose death), concurrent gabapentinoids, MME >50/day (CDC 2022 guideline), untreated OSA, CKD (morphine / codeine metabolites accumulate — prefer hydromorphone or fentanyl), hx SUD. Always co-prescribe naloxone if MME ≥50 or benzo concurrent. Check state PDMP.
 

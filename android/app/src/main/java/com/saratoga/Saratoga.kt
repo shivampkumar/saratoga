@@ -51,11 +51,11 @@ class Saratoga(private val ctx: Context, private val weightsDir: File) {
     private val logFile: File
     private val fhirFile: File
 
-    // Per-τ gate thresholds (cosine).
+    // Per-τ gate thresholds (cosine). Raised to avoid false-positive over-firing.
     private val gateThresholds = mapOf(
-        "tau1" to 0.42f,
-        "tau3" to 0.48f,
-        "tau4" to 0.48f,
+        "tau1" to 0.56f,
+        "tau3" to 0.58f,
+        "tau4" to 0.58f,
     )
 
     private val taskTitles = mapOf(
@@ -273,6 +273,9 @@ class Saratoga(private val ctx: Context, private val weightsDir: File) {
         Outcome(fired, bundle)
     }
 
+    private var lastBundlePreview: String? = null
+    fun latestBundlePreview(): String? = lastBundlePreview
+
     private fun emitFhirBundle(utterance: String, fired: List<TaskOutput>): String {
         val encId = "enc-${System.currentTimeMillis()}"
         val bundle = JSONObject()
@@ -299,9 +302,34 @@ class Saratoga(private val ctx: Context, private val weightsDir: File) {
                         }
                     })))
             })
-        fhirFile.appendText(bundle.toString() + "\n")
+        val bundleStr = bundle.toString()
+        fhirFile.appendText(bundleStr + "\n")
         appendLog("fhir_queued", "enc=$encId")
+        // Compact preview for UI (strip whitespace-heavy; show first 360 chars)
+        lastBundlePreview = buildFhirPreview(bundle, encId)
         return encId
+    }
+
+    private fun buildFhirPreview(bundle: JSONObject, encId: String): String {
+        val entries = bundle.optJSONArray("entry") ?: return ""
+        val sb = StringBuilder()
+        sb.append("Bundle#$encId {\n")
+        for (i in 0 until entries.length()) {
+            val res = entries.optJSONObject(i)?.optJSONObject("resource") ?: continue
+            val type = res.optString("resourceType")
+            sb.append("  $type")
+            when (type) {
+                "Encounter" -> sb.append(" id=${res.optString("id")} status=${res.optString("status")}")
+                "ClinicalImpression" -> {
+                    val f = res.optJSONArray("finding")
+                    val n = f?.length() ?: 0
+                    sb.append(" findings=$n")
+                }
+            }
+            sb.append("\n")
+        }
+        sb.append("}")
+        return sb.toString()
     }
 
     fun syncQueueSize(): Int = if (fhirFile.exists()) fhirFile.readLines().count { it.isNotBlank() } else 0

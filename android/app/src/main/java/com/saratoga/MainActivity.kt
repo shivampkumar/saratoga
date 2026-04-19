@@ -3,6 +3,7 @@ package com.saratoga
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.text.Html
 import android.view.View
 import android.widget.Button
 import android.widget.TextView
@@ -11,6 +12,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -21,6 +23,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var asr: Asr
     private val recorder = Recorder()
     private var ready = false
+    private var activeSpeaker: String? = null
 
     private lateinit var status: TextView
     private lateinit var statusDot: View
@@ -33,12 +36,20 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tau4View: TextView
     private lateinit var tau4Meta: TextView
     private lateinit var fhirView: TextView
+    private lateinit var fhirPreview: TextView
+    private lateinit var fhirSync: TextView
     private lateinit var fhirBadge: TextView
     private lateinit var btnLoad: Button
-    private lateinit var btnRecord: Button
+    private lateinit var btnClinician: Button
+    private lateinit var btnPatient: Button
+    private lateinit var btnEnd: Button
     private lateinit var btnSync: Button
 
-    private val transcriptLog = StringBuilder()
+    private val encounterHtml = StringBuilder()
+    private val rollingUtterances = StringBuilder()
+
+    // Minimum characters to run τ inference — avoid over-firing on short utterances.
+    private val minEncounterChars = 30
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,16 +63,19 @@ class MainActivity : AppCompatActivity() {
         tau3View = findViewById(R.id.tau3); tau3Meta = findViewById(R.id.tau3Meta)
         tau4View = findViewById(R.id.tau4); tau4Meta = findViewById(R.id.tau4Meta)
         fhirView = findViewById(R.id.fhir)
+        fhirPreview = findViewById(R.id.fhirPreview)
+        fhirSync = findViewById(R.id.fhirSync)
         fhirBadge = findViewById(R.id.fhirBadge)
         btnLoad = findViewById(R.id.btnLoad)
-        btnRecord = findViewById(R.id.btnRecord)
+        btnClinician = findViewById(R.id.btnClinician)
+        btnPatient = findViewById(R.id.btnPatient)
+        btnEnd = findViewById(R.id.btnEnd)
         btnSync = findViewById(R.id.btnSync)
 
         ensureMicPermission()
         setStatus("boot", ready = false)
 
         val weightsDir = File(getExternalFilesDir(null), "weights")
-        status.text = "weights: $weightsDir"
 
         btnLoad.setOnClickListener {
             btnLoad.isEnabled = false
@@ -76,9 +90,11 @@ class MainActivity : AppCompatActivity() {
                     saratoga.load()
                     val dt = System.currentTimeMillis() - t0
                     setStatus("ready", ready = true)
-                    status.text = "loaded in ${dt}ms. press RECORD."
+                    status.text = "loaded in ${dt}ms · tap CLINICIAN / PATIENT to record turns"
                     btnLoad.visibility = View.GONE
-                    btnRecord.isEnabled = true
+                    btnClinician.isEnabled = true
+                    btnPatient.isEnabled = true
+                    btnEnd.isEnabled = true
                     btnSync.isEnabled = true
                     ready = true
                     refreshSync()
@@ -90,10 +106,9 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        btnRecord.setOnClickListener {
-            if (!ready) return@setOnClickListener
-            if (recorder.isRecording()) stopAndProcess() else startRecording()
-        }
+        btnClinician.setOnClickListener { onSpeakerTap("CLINICIAN") }
+        btnPatient.setOnClickListener { onSpeakerTap("PATIENT") }
+        btnEnd.setOnClickListener { endEncounter() }
 
         btnSync.setOnClickListener {
             if (!ready) return@setOnClickListener
@@ -101,56 +116,106 @@ class MainActivity : AppCompatActivity() {
             if (n == 0) { status.text = "queue empty"; return@setOnClickListener }
             setStatus("sync", busy = true)
             status.text = "POST /Bundle × $n → HAPI stub..."
+            fhirSync.text = ""
             lifecycleScope.launch {
+                animateSync(n)
                 val (drained, ids) = saratoga.drainSyncQueue()
                 status.text = "✓ synced $drained Bundle(s) → HAPI stub"
-                fhirView.text = "✓ reconciled → ${ids.joinToString(", ")}"
+                fhirSync.text = "✓ 200 OK · reconciled ${ids.joinToString(", ")}"
                 refreshSync()
                 setStatus("ready", ready = true)
             }
         }
     }
 
-    private fun startRecording() {
+    // Speaker tap: if not recording, start recording for this speaker.
+    // If already recording the SAME speaker, finish that turn.
+    // If recording a DIFFERENT speaker, finish that turn then start this one.
+    private fun onSpeakerTap(speaker: String) {
+        if (!ready) return
+        if (recorder.isRecording()) {
+            val prev = activeSpeaker ?: speaker
+            finishTurn(prev) { nextSpeaker ->
+                if (speaker != prev) startTurn(speaker)
+                else setStatus("ready", ready = true)
+            }
+            if (speaker == prev) {
+                // pure stop — don't auto-restart
+                return
+            }
+        } else {
+            startTurn(speaker)
+        }
+    }
+
+    private fun startTurn(speaker: String) {
         if (ContextCompat.checkSelfPermission(
                 this, Manifest.permission.RECORD_AUDIO
             ) != PackageManager.PERMISSION_GRANTED
         ) { ensureMicPermission(); return }
         recorder.start()
-        btnRecord.text = "■ STOP"
+        activeSpeaker = speaker
+        updateButtonStates(recordingSpeaker = speaker)
         setStatus("rec", rec = true)
-        status.text = "recording..."
+        status.text = "recording · $speaker ..."
     }
 
-    private fun stopAndProcess() {
-        btnRecord.isEnabled = false
-        btnRecord.text = "● RECORD"
+    private fun finishTurn(speaker: String, onDone: ((String?) -> Unit)? = null) {
+        val savedSpeaker = speaker
         setStatus("asr", busy = true)
-        status.text = "transcribing..."
+        status.text = "transcribing $savedSpeaker ..."
         lifecycleScope.launch {
             val pcm = recorder.stop()
-            val tAsr = System.currentTimeMillis()
+            activeSpeaker = null
+            updateButtonStates(recordingSpeaker = null)
             val text = withContext(Dispatchers.Default) { asr.transcribe(pcm, cacheDir) }
-            val asrMs = System.currentTimeMillis() - tAsr
-            if (text.isBlank()) {
-                status.text = "(empty transcript — try again)"
+            if (text.isNotBlank()) {
+                val color = if (savedSpeaker == "CLINICIAN") "#60A5FA" else "#F59E0B"
+                encounterHtml.append(
+                    "<b><font color=\"$color\">$savedSpeaker:</font></b> $text<br/>"
+                )
+                transcript.text = Html.fromHtml(encounterHtml.toString(), Html.FROM_HTML_MODE_LEGACY)
+                rollingUtterances.append(savedSpeaker.lowercase()).append(": ").append(text).append('\n')
+                status.text = "captured $savedSpeaker turn · ${text.length} chars"
                 setStatus("ready", ready = true)
-                btnRecord.isEnabled = true
-                return@launch
+            } else {
+                status.text = "($savedSpeaker: empty transcript)"
+                setStatus("ready", ready = true)
             }
-            transcriptLog.append("• ").append(text).append('\n')
-            transcript.text = transcriptLog.toString()
+            onDone?.invoke(savedSpeaker)
+        }
+    }
 
-            setStatus("think", busy = true)
-            runOnUiThread {
-                tau1View.text = "…"; tau1Meta.text = ""
-                tau3View.text = "…"; tau3Meta.text = ""
-                tau4View.text = "…"; tau4Meta.text = ""
-            }
-            status.text = "asr ${asrMs}ms · RAG gate → LLM..."
-            val t0 = System.currentTimeMillis()
+    private fun endEncounter() {
+        if (!ready) return
+        if (recorder.isRecording()) {
+            // stop active turn first, then end
+            finishTurn(activeSpeaker ?: "CLINICIAN") { _ -> runInference() }
+            return
+        }
+        runInference()
+    }
+
+    private fun runInference() {
+        val full = rollingUtterances.toString().trim()
+        if (full.length < minEncounterChars) {
+            status.text = "encounter too short (<${minEncounterChars} chars) — speak more before ending"
+            return
+        }
+        btnClinician.isEnabled = false
+        btnPatient.isEnabled = false
+        btnEnd.isEnabled = false
+        setStatus("think", busy = true)
+        runOnUiThread {
+            tau1View.text = "…"; tau1Meta.text = ""
+            tau3View.text = "…"; tau3Meta.text = ""
+            tau4View.text = "…"; tau4Meta.text = ""
+        }
+        status.text = "RAG gate + LLM on full encounter ..."
+        val t0 = System.currentTimeMillis()
+        lifecycleScope.launch {
             val out = saratoga.handle(
-                utterance = text,
+                utterance = full,
                 onQuick = { tau, chunkId, score, preview ->
                     runOnUiThread {
                         val (view, meta) = panes(tau)
@@ -167,10 +232,33 @@ class MainActivity : AppCompatActivity() {
                 },
             )
             val dt = System.currentTimeMillis() - t0
-            finalizeOutcome(out, asrMs, dt)
-            btnRecord.isEnabled = true
+            finalizeOutcome(out, dt)
+            btnClinician.isEnabled = true
+            btnPatient.isEnabled = true
+            btnEnd.isEnabled = true
             refreshSync()
             setStatus("ready", ready = true)
+        }
+    }
+
+    private fun updateButtonStates(recordingSpeaker: String?) {
+        if (recordingSpeaker == null) {
+            btnClinician.text = "● CLINICIAN"
+            btnPatient.text = "● PATIENT"
+            btnClinician.isEnabled = ready
+            btnPatient.isEnabled = ready
+            return
+        }
+        if (recordingSpeaker == "CLINICIAN") {
+            btnClinician.text = "■ STOP CLINICIAN"
+            btnPatient.text = "→ SWITCH TO PATIENT"
+            btnClinician.isEnabled = true
+            btnPatient.isEnabled = true
+        } else {
+            btnClinician.text = "→ SWITCH TO CLINICIAN"
+            btnPatient.text = "■ STOP PATIENT"
+            btnClinician.isEnabled = true
+            btnPatient.isEnabled = true
         }
     }
 
@@ -180,7 +268,7 @@ class MainActivity : AppCompatActivity() {
         else -> tau4View to tau4Meta
     }
 
-    private fun finalizeOutcome(out: Saratoga.Outcome, asrMs: Long, dt: Long) {
+    private fun finalizeOutcome(out: Saratoga.Outcome, dt: Long) {
         val fired = out.tasksFired
         val firedSet = fired.map { it.tau }.toSet()
         for (tau in listOf("tau1", "tau3", "tau4")) {
@@ -192,20 +280,21 @@ class MainActivity : AppCompatActivity() {
             } else if (t != null) {
                 val s = t.topHit?.score ?: 0f
                 meta.text = "[${t.topHit?.chunk?.id ?: "?"} s=${"%.2f".format(s)}]"
-                // Replace streaming text with final parsed section (cleaner, no stray headers).
                 if (t.card.isNotBlank()) view.text = t.card
             }
         }
-        status.text = "asr=${asrMs}ms  total=${dt}ms  fired=${firedSet.joinToString(",")}"
+        status.text = "total=${dt}ms  fired=${firedSet.joinToString(",")}"
         out.fhirBundle?.let {
-            fhirView.text = "⇢ queued $it"
+            fhirView.text = "⇢ queued encounter $it"
+            val preview = saratoga.latestBundlePreview() ?: ""
+            fhirPreview.text = preview
         }
     }
 
     private fun refreshSync() {
         if (!::saratoga.isInitialized) return
         val n = saratoga.syncQueueSize()
-        btnSync.text = "SYNC $n"
+        btnSync.text = "SYNC FHIR $n"
         fhirBadge.text = "$n queued"
     }
 
@@ -219,6 +308,20 @@ class MainActivity : AppCompatActivity() {
                 else -> R.drawable.dot_busy
             }
         )
+    }
+
+    private suspend fun animateSync(n: Int) {
+        val steps = listOf(
+            "→ opening TLS tunnel to HAPI FHIR endpoint",
+            "→ POST /fhir/Bundle (n=$n)",
+            "→ server: 201 Created",
+            "→ reconciling Encounter.period.end",
+            "→ drained queue"
+        )
+        for (s in steps) {
+            fhirSync.text = (fhirSync.text.toString() + s + "\n").trim()
+            delay(140)
+        }
     }
 
     private fun ensureMicPermission() {

@@ -54,14 +54,13 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="on-device clinical co-pilot · offline-first · airplane-mode"
+            android:text="on-device clinical co-pilot · encounter-aware · airplane mode"
             android:textColor="#6B7280"
             android:textSize="10sp"
             android:fontFamily="monospace"
             android:paddingTop="3dp"
-            android:paddingBottom="14dp" />
+            android:paddingBottom="12dp" />
 
-        <!-- CTA ROW -->
         <Button
             android:id="@+id/btnLoad"
             android:layout_width="match_parent"
@@ -74,21 +73,59 @@
             android:background="@drawable/btn_primary"
             android:fontFamily="monospace" />
 
+        <!-- SPEAKER-TAGGED RECORDING -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:weightSum="3"
+            android:weightSum="2"
             android:layout_marginTop="6dp">
 
             <Button
-                android:id="@+id/btnRecord"
+                android:id="@+id/btnClinician"
                 android:layout_width="0dp"
-                android:layout_weight="2"
-                android:layout_height="56dp"
-                android:text="● RECORD"
+                android:layout_weight="1"
+                android:layout_height="52dp"
+                android:text="● CLINICIAN"
                 android:textColor="#F9FAFB"
-                android:textSize="15sp"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.1"
+                android:background="@drawable/btn_clinician"
+                android:fontFamily="monospace"
+                android:enabled="false" />
+
+            <Button
+                android:id="@+id/btnPatient"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="52dp"
+                android:text="● PATIENT"
+                android:textColor="#F9FAFB"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.1"
+                android:background="@drawable/btn_patient"
+                android:fontFamily="monospace"
+                android:layout_marginStart="6dp"
+                android:enabled="false" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:weightSum="2"
+            android:layout_marginTop="6dp">
+
+            <Button
+                android:id="@+id/btnEnd"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="44dp"
+                android:text="END ENCOUNTER"
+                android:textColor="#F9FAFB"
+                android:textSize="12sp"
                 android:textStyle="bold"
                 android:letterSpacing="0.1"
                 android:background="@drawable/btn_danger"
@@ -99,10 +136,10 @@
                 android:id="@+id/btnSync"
                 android:layout_width="0dp"
                 android:layout_weight="1"
-                android:layout_height="56dp"
-                android:text="SYNC 0"
+                android:layout_height="44dp"
+                android:text="SYNC FHIR 0"
                 android:textColor="#F9FAFB"
-                android:textSize="12sp"
+                android:textSize="11sp"
                 android:textStyle="bold"
                 android:letterSpacing="0.1"
                 android:background="@drawable/btn_primary"
@@ -111,7 +148,6 @@
                 android:enabled="false" />
         </LinearLayout>
 
-        <!-- STATUS LINE -->
         <TextView
             android:id="@+id/status"
             android:layout_width="match_parent"
@@ -123,7 +159,7 @@
             android:paddingTop="8dp"
             android:paddingBottom="10dp" />
 
-        <!-- TRANSCRIPT CARD -->
+        <!-- ENCOUNTER TRANSCRIPT -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -146,7 +182,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="TRANSCRIPT"
+                    android:text="ENCOUNTER TRANSCRIPT · speaker-tagged"
                     android:textColor="#F59E0B"
                     android:textSize="10sp"
                     android:textStyle="bold"
@@ -160,11 +196,11 @@
                     android:textColor="#E5E7EB"
                     android:textSize="13sp"
                     android:paddingTop="4dp"
-                    android:fontFamily="sans-serif" />
+                    android:fontFamily="monospace" />
             </LinearLayout>
         </LinearLayout>
 
-        <!-- DDX CARD -->
+        <!-- τ1 DDX -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -205,7 +241,6 @@
                         android:id="@+id/tau1Meta"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text=""
                         android:textColor="#6B7280"
                         android:textSize="9sp"
                         android:fontFamily="monospace" />
@@ -222,7 +257,7 @@
             </LinearLayout>
         </LinearLayout>
 
-        <!-- RED FLAG CARD -->
+        <!-- τ3 RED FLAG -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -263,7 +298,6 @@
                         android:id="@+id/tau3Meta"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text=""
                         android:textColor="#6B7280"
                         android:textSize="9sp"
                         android:fontFamily="monospace" />
@@ -281,7 +315,7 @@
             </LinearLayout>
         </LinearLayout>
 
-        <!-- MED REC CARD -->
+        <!-- τ4 MED REC -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -322,7 +356,6 @@
                         android:id="@+id/tau4Meta"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text=""
                         android:textColor="#6B7280"
                         android:textSize="9sp"
                         android:fontFamily="monospace" />
@@ -339,7 +372,7 @@
             </LinearLayout>
         </LinearLayout>
 
-        <!-- FHIR CARD -->
+        <!-- FHIR QUEUE · expanded visual -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -364,7 +397,7 @@
                     android:layout_width="0dp"
                     android:layout_weight="1"
                     android:layout_height="wrap_content"
-                    android:text="FHIR QUEUE · offline-buffered"
+                    android:text="FHIR BUNDLE · HL7 R5 · offline-buffered"
                     android:textColor="#F59E0B"
                     android:textSize="10sp"
                     android:textStyle="bold"
@@ -390,6 +423,26 @@
                 android:textSize="10sp"
                 android:paddingTop="6dp"
                 android:text="(no encounters yet)" />
+
+            <TextView
+                android:id="@+id/fhirPreview"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#6B7280"
+                android:fontFamily="monospace"
+                android:textSize="9sp"
+                android:paddingTop="6dp"
+                android:text="" />
+
+            <TextView
+                android:id="@+id/fhirSync"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#10B981"
+                android:fontFamily="monospace"
+                android:textSize="10sp"
+                android:paddingTop="4dp"
+                android:text="" />
         </LinearLayout>
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

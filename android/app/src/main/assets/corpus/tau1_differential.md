@@ -49,6 +49,16 @@ Sources: ACEP Clinical Policy (Acute Chest Pain), Tintinalli's Emergency Medicin
 
 ---
 
+## ddx_colorectal_recurrence
+**Colorectal cancer recurrence / new primary in survivor** — suspect in any post-resection patient with rising CEA, new rectal bleeding, anemia, altered bowel habits, or unintentional weight loss. NCCN Survivorship Guideline: CEA q3-6 months × 2 years, then q6 months × 3 more years for stage II-III. CT chest/abdomen/pelvis annually × 5 years. Colonoscopy at 1 year post-resection, again at 3 years, then q5 years if clean. **Rising CEA + bleeding = colonoscopy + CT A/P within 2 weeks.** Do not attribute bleeding to hemorrhoids until malignant source excluded.
+
+---
+
+## ddx_breast_cancer_longterm
+**Breast cancer survivor — late effects to screen** (per AMIA 2025 *Survivorship Navigator* paper τ₂ task). Anthracycline cardiotoxicity: LVEF q1y if cumulative doxorubicin >250 mg/m². Trastuzumab cardiotoxicity: LVEF q3m during therapy, q1y after. Tamoxifen — DVT/PE risk, endometrial cancer risk, hot flashes. Aromatase inhibitor — bone density DEXA q2y, arthralgia. Radiation fibrosis, brachial plexopathy, second primary (contralateral breast + angiosarcoma). Chemo-induced peripheral neuropathy (CIPN). Cognitive ("chemo brain"). Fatigue, sexual dysfunction. Screen lifelong.
+
+---
+
 ## ddx_stroke_lvo
 **Large-vessel occlusion stroke** — sudden focal neuro deficit. FAST: Face droop, Arm weakness, Speech slurred, Time to call. NIHSS ≥6 suggests LVO. Time windows: tPA <4.5h from last known well (strict contraindications), mechanical thrombectomy <24h if LVO on CTA. Immediate: non-contrast CT to rule out hemorrhage, then CTA head+neck, glucose, BP control (target <185/110 pre-tPA).
 
