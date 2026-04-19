@@ -192,6 +192,8 @@ class MainActivity : AppCompatActivity() {
             } else if (t != null) {
                 val s = t.topHit?.score ?: 0f
                 meta.text = "[${t.topHit?.chunk?.id ?: "?"} s=${"%.2f".format(s)}]"
+                // Replace streaming text with final parsed section (cleaner, no stray headers).
+                if (t.card.isNotBlank()) view.text = t.card
             }
         }
         status.text = "asr=${asrMs}ms  total=${dt}ms  fired=${firedSet.joinToString(",")}"

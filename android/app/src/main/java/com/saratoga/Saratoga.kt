@@ -67,8 +67,15 @@ class Saratoga(private val ctx: Context, private val weightsDir: File) {
     private val combinedSystem = """
         You are Saratoga, an on-device clinical co-pilot. A clinician is seeing a patient.
         Given the transcript and retrieved guideline chunks for up to three tasks, emit
-        EXACTLY these three sections (in this order). Use 'none' for any section with no
-        relevant chunks provided. Cite chunk ids in [brackets].
+        EXACTLY these three sections in this order. Use 'none' for any section with no
+        relevant chunks.
+
+        Formatting rules (strict):
+        - Plain text only. NO LaTeX ($...$, \text, \ge, etc).
+        - Numbers as plain digits or words (50, RR 58, SpO2 90%), no math mode.
+        - Cite chunk ids in [brackets] at end of each line.
+        - MUST-RULE-OUT: list only conditions the transcript actually raises suspicion for.
+        - In ACTION, include specific drugs with doses when the chunk provides them.
 
         ## DDX
         1. <condition> — <key feature> [chunk_id]
@@ -81,16 +88,16 @@ class Saratoga(private val ctx: Context, private val weightsDir: File) {
         ## RED FLAG
         ALERT: <condition> [chunk_id]
         ACTION:
-        * <bullet>
-        * <bullet>
-        * <bullet>
+        * <specific drug + dose or specific step>
+        * <specific drug + dose or specific step>
+        * <specific drug + dose or specific step>
 
         ## MED REC
         MED FLAG: <drug(s)>
         RISK: <one line> [chunk_id]
-        ACTION: <one line>
+        ACTION: <one line with specific dose or step>
 
-        Under 220 words total. No preamble. No disclaimers.
+        Under 200 words total. No preamble. No disclaimers. Stop after MED REC.
     """.trimIndent()
 
     init {
@@ -170,17 +177,25 @@ class Saratoga(private val ctx: Context, private val weightsDir: File) {
         val opts = JSONObject().put("max_tokens", 260).put("temperature", 0.2).toString()
 
         val buf = StringBuilder()
-        val headerRe = Regex("(?m)^##\\s+(DDX|RED FLAG|MED REC)\\s*$")
+        // Strict header anchor to avoid accidental substring matches mid-stream.
+        val headerRe = Regex("(?m)^##\\s+(DDX|RED FLAG|MED REC)\\b.*$")
         val cb = if (onSection != null) CactusTokenCallback { token, _ ->
             buf.append(token)
             val full = buf.toString()
             val matches = headerRe.findAll(full).toList()
             if (matches.isEmpty()) return@CactusTokenCallback
-            val last = matches.last()
-            val tau = headerToTau(last.groupValues[1]) ?: return@CactusTokenCallback
-            if (tau !in firedTaus) return@CactusTokenCallback
-            val body = full.substring(last.range.last + 1).trim()
-            if (body.isNotEmpty()) onSection.update(tau, body)
+            // Update all firing tau panes with their respective slice (cleaner mid-stream).
+            for ((i, m) in matches.withIndex()) {
+                val t = headerToTau(m.groupValues[1]) ?: continue
+                if (t !in firedTaus) continue
+                val start = m.range.last + 1
+                // Strip any partial trailing header fragment.
+                var end = if (i + 1 < matches.size) matches[i + 1].range.first else full.length
+                val tail = Regex("\\n##[^\\n]*$").find(full.substring(start, end))
+                if (tail != null) end = start + tail.range.first
+                val body = stripLatex(full.substring(start, end).trim())
+                if (body.isNotEmpty()) onSection.update(t, body)
+            }
         } else null
 
         cactusReset(reasonHandle)
@@ -197,7 +212,7 @@ class Saratoga(private val ctx: Context, private val weightsDir: File) {
 
     private fun parseSections(text: String, firedTaus: Set<String>): Map<String, String> {
         val out = mutableMapOf<String, String>()
-        val regex = Regex("(?m)^##\\s+(DDX|RED FLAG|MED REC)\\s*$")
+        val regex = Regex("(?m)^##\\s+(DDX|RED FLAG|MED REC)\\b.*$")
         val matches = regex.findAll(text).toList()
         for ((i, m) in matches.withIndex()) {
             val header = m.groupValues[1]
@@ -210,10 +225,22 @@ class Saratoga(private val ctx: Context, private val weightsDir: File) {
             if (tau !in firedTaus) continue
             val start = m.range.last + 1
             val end = if (i + 1 < matches.size) matches[i + 1].range.first else text.length
-            val body = text.substring(start, end).trim()
+            val body = stripLatex(text.substring(start, end).trim())
             if (body.isNotBlank() && !body.equals("none", ignoreCase = true)) out[tau] = body
         }
         return out
+    }
+
+    private fun stripLatex(s: String): String {
+        // Remove \text{X}, $...$, \ge, \le, etc. Keep readable text.
+        var t = s
+        t = Regex("\\\\text\\{([^}]*)\\}").replace(t) { it.groupValues[1] }
+        t = Regex("\\$([^$]*)\\$").replace(t) { it.groupValues[1] }
+        t = t.replace("\\ge", "≥").replace("\\le", "≤")
+            .replace("\\times", "×").replace("\\pm", "±")
+            .replace("\\%", "%").replace("\\_", "_")
+        t = Regex("\\\\[a-zA-Z]+\\b").replace(t, "")
+        return t
     }
 
     suspend fun handle(

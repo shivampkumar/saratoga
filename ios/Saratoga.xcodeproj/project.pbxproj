@@ -1,0 +1,407 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		07982FD056F4AE248A9509A1 /* corpus_index.json in Resources */ = {isa = PBXBuildFile; fileRef = BD73012321C530580CB13DD2 /* corpus_index.json */; };
+		0B03A36C61584857C4962CFC /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7927D7EA7AA43AF8FF433309 /* ContentView.swift */; };
+		1534AC06D959E67DF7BDFBBC /* Recorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 762CEF59B7CF7FB5B8D8A2C7 /* Recorder.swift */; };
+		28EA2B8B23F313A9FF4E83C0 /* Saratoga.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EA7216266A70FC30CC277F1 /* Saratoga.swift */; };
+		2A9067104F838F041C18C38B /* CactusSwift.swift in Sources */ = {isa = PBXBuildFile; fileRef = 031A91C930CD855F56C810D9 /* CactusSwift.swift */; };
+		2B72015B58729D337D84CB7F /* Asr.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FD23412F61EE5FB7E16957D /* Asr.swift */; };
+		484970342A6375A11387A36C /* tau3_redflags.md in Resources */ = {isa = PBXBuildFile; fileRef = C423192DD94BC445E74AC137 /* tau3_redflags.md */; };
+		59B40AF89A68133548EEDA02 /* cactus-ios.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 746FEA04EB09C76662739846 /* cactus-ios.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		94EEA2640F0C26A7DA84AF08 /* tau1_differential.md in Resources */ = {isa = PBXBuildFile; fileRef = F112CAFA10A7B7A5451BA701 /* tau1_differential.md */; };
+		D7010544B2A6E8817BADFFAD /* tau4_medrec.md in Resources */ = {isa = PBXBuildFile; fileRef = 201A81984139FF33B4628E39 /* tau4_medrec.md */; };
+		E45237965E564CC837A5B27A /* cactus-ios.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 746FEA04EB09C76662739846 /* cactus-ios.xcframework */; };
+		F51D7E9625928F0E6D90344D /* SaratogaApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 732A0DA4E65B9420EE7E8576 /* SaratogaApp.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		3666FF80FB07240348B0E052 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				59B40AF89A68133548EEDA02 /* cactus-ios.xcframework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		031A91C930CD855F56C810D9 /* CactusSwift.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CactusSwift.swift; sourceTree = "<group>"; };
+		15C21E45EC376BE69BF4C43B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		201A81984139FF33B4628E39 /* tau4_medrec.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = tau4_medrec.md; sourceTree = "<group>"; };
+		6EA7216266A70FC30CC277F1 /* Saratoga.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Saratoga.swift; sourceTree = "<group>"; };
+		6FD23412F61EE5FB7E16957D /* Asr.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Asr.swift; sourceTree = "<group>"; };
+		732A0DA4E65B9420EE7E8576 /* SaratogaApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SaratogaApp.swift; sourceTree = "<group>"; };
+		746FEA04EB09C76662739846 /* cactus-ios.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = "cactus-ios.xcframework"; path = "../../cactus/apple/cactus-ios.xcframework"; sourceTree = "<group>"; };
+		762CEF59B7CF7FB5B8D8A2C7 /* Recorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Recorder.swift; sourceTree = "<group>"; };
+		7927D7EA7AA43AF8FF433309 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		977E38A64C078CC9FEDB9DEF /* Saratoga.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Saratoga.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		BD73012321C530580CB13DD2 /* corpus_index.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = corpus_index.json; sourceTree = "<group>"; };
+		C423192DD94BC445E74AC137 /* tau3_redflags.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = tau3_redflags.md; sourceTree = "<group>"; };
+		F112CAFA10A7B7A5451BA701 /* tau1_differential.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = tau1_differential.md; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		EB014E853BD1E2A13A78F97B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E45237965E564CC837A5B27A /* cactus-ios.xcframework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		42834395B0912A22FA6069A3 /* SaratogaApp */ = {
+			isa = PBXGroup;
+			children = (
+				6FD23412F61EE5FB7E16957D /* Asr.swift */,
+				031A91C930CD855F56C810D9 /* CactusSwift.swift */,
+				7927D7EA7AA43AF8FF433309 /* ContentView.swift */,
+				15C21E45EC376BE69BF4C43B /* Info.plist */,
+				762CEF59B7CF7FB5B8D8A2C7 /* Recorder.swift */,
+				6EA7216266A70FC30CC277F1 /* Saratoga.swift */,
+				732A0DA4E65B9420EE7E8576 /* SaratogaApp.swift */,
+				E54577A430F78092B5B3EC68 /* Resources */,
+			);
+			path = SaratogaApp;
+			sourceTree = "<group>";
+		};
+		4A5AD472D52C6B01E6B7DEBF /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				746FEA04EB09C76662739846 /* cactus-ios.xcframework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		6B25DB00CAD69435F579AD0F = {
+			isa = PBXGroup;
+			children = (
+				42834395B0912A22FA6069A3 /* SaratogaApp */,
+				4A5AD472D52C6B01E6B7DEBF /* Frameworks */,
+				E9329FCEE503581602D1B7AC /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		B31919855B1D3754782061F5 /* corpus */ = {
+			isa = PBXGroup;
+			children = (
+				F112CAFA10A7B7A5451BA701 /* tau1_differential.md */,
+				C423192DD94BC445E74AC137 /* tau3_redflags.md */,
+				201A81984139FF33B4628E39 /* tau4_medrec.md */,
+			);
+			path = corpus;
+			sourceTree = "<group>";
+		};
+		E54577A430F78092B5B3EC68 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				BD73012321C530580CB13DD2 /* corpus_index.json */,
+				B31919855B1D3754782061F5 /* corpus */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		E9329FCEE503581602D1B7AC /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				977E38A64C078CC9FEDB9DEF /* Saratoga.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		740909E77E85E3C4B143C22C /* Saratoga */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7DA4CD8F733BFF4B06C1C6B4 /* Build configuration list for PBXNativeTarget "Saratoga" */;
+			buildPhases = (
+				E821B41098FA61BD10B96AF0 /* Sources */,
+				2FF77E04F6C4CFF1DC0FAF0E /* Resources */,
+				EB014E853BD1E2A13A78F97B /* Frameworks */,
+				3666FF80FB07240348B0E052 /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Saratoga;
+			packageProductDependencies = (
+			);
+			productName = Saratoga;
+			productReference = 977E38A64C078CC9FEDB9DEF /* Saratoga.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		E90288E23A5DAC479BD223AB /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					740909E77E85E3C4B143C22C = {
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 191237260DF281626A9DD8DF /* Build configuration list for PBXProject "Saratoga" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 6B25DB00CAD69435F579AD0F;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = E9329FCEE503581602D1B7AC /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				740909E77E85E3C4B143C22C /* Saratoga */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		2FF77E04F6C4CFF1DC0FAF0E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				07982FD056F4AE248A9509A1 /* corpus_index.json in Resources */,
+				94EEA2640F0C26A7DA84AF08 /* tau1_differential.md in Resources */,
+				484970342A6375A11387A36C /* tau3_redflags.md in Resources */,
+				D7010544B2A6E8817BADFFAD /* tau4_medrec.md in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		E821B41098FA61BD10B96AF0 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2B72015B58729D337D84CB7F /* Asr.swift in Sources */,
+				2A9067104F838F041C18C38B /* CactusSwift.swift in Sources */,
+				0B03A36C61584857C4962CFC /* ContentView.swift in Sources */,
+				1534AC06D959E67DF7BDFBBC /* Recorder.swift in Sources */,
+				28EA2B8B23F313A9FF4E83C0 /* Saratoga.swift in Sources */,
+				F51D7E9625928F0E6D90344D /* SaratogaApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		506CC38A9A88EE172C81348D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.9;
+			};
+			name = Debug;
+		};
+		641F96C38FF53E8456FB3125 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 2UQ5B8TZT6;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"../../cactus/apple\"",
+				);
+				INFOPLIST_FILE = SaratogaApp/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.saratoga.app;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		CEF9378FA454E477A27EA971 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 2UQ5B8TZT6;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"../../cactus/apple\"",
+				);
+				INFOPLIST_FILE = SaratogaApp/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.saratoga.app;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		E658485A51DEA0679FEFBDC5 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.9;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		191237260DF281626A9DD8DF /* Build configuration list for PBXProject "Saratoga" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				506CC38A9A88EE172C81348D /* Debug */,
+				E658485A51DEA0679FEFBDC5 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		7DA4CD8F733BFF4B06C1C6B4 /* Build configuration list for PBXNativeTarget "Saratoga" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				641F96C38FF53E8456FB3125 /* Debug */,
+				CEF9378FA454E477A27EA971 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = E90288E23A5DAC479BD223AB /* Project object */;
+}
