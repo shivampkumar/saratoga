@@ -157,34 +157,125 @@ python clinical.py "63yo colorectal cancer survivor, CEA 4.2, rectal bleeding la
 python eval/run_eval.py    # three-scenario eval — numbers land in eval/results.json
 ```
 
-### Android (Galaxy S26 Ultra)
+### Android (Galaxy S26 Ultra) — full setup from zero
+
+Prereqs (one-time):
 
 ```bash
-# build libcactus.so for Android (requires Android NDK)
+# macOS host toolchain
+brew install cmake gradle
+brew install --cask temurin@17 android-commandlinetools android-platform-tools
+export ANDROID_HOME="$HOME/Library/Android/sdk"
+yes | sdkmanager --sdk_root="$ANDROID_HOME" --licenses
+sdkmanager --sdk_root="$ANDROID_HOME" "platforms;android-34" "build-tools;34.0.0" "ndk;27.0.12077973" "platform-tools"
+echo 'export ANDROID_HOME="$HOME/Library/Android/sdk"' >> ~/.zshrc
+echo 'export ANDROID_NDK_HOME="$ANDROID_HOME/ndk/27.0.12077973"' >> ~/.zshrc
+echo 'export PATH="$ANDROID_HOME/platform-tools:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+```
+
+Build libcactus.so + copy SDK into project:
+
+```bash
 cd cactus && source ./setup && cactus build --android
 cp cactus/android/libcactus.so saratoga/android/app/src/main/jniLibs/arm64-v8a/
 cp cactus/android/Cactus.kt saratoga/android/app/src/main/java/com/cactus/
+```
+
+On the phone: Settings → About phone → tap **Build number** × 7 → Settings → Developer Options → **USB debugging** ON. Connect USB, authorize computer.
+
+```bash
+adb devices    # should list your phone
 
 cd saratoga/android
 ./gradlew assembleDebug
-./deploy.sh    # APK + one-time 8.6 GB weights push to /sdcard/Android/data/com.saratoga/files/weights
+./deploy.sh    # installs APK + first-time 8.6 GB weights push to /sdcard/Android/data/com.saratoga/files/weights
 ```
 
-Iterate: `./gradlew assembleDebug && ./deploy.sh` (APK-only push).
+Iterate later: `./gradlew assembleDebug && ./deploy.sh` (APK-only, weights persist through `adb install -r`).
 
-### iOS (iPhone 15 Pro, Swift via Cactus apple SDK)
+Open **Saratoga** on phone → tap **LOAD MODELS** → **CLINICIAN** / **PATIENT** buttons for speaker-tagged encounter → **END ENCOUNTER** fires τ cards.
+
+### iOS (iPhone 15 Pro, Swift via Cactus Apple SDK) — full setup from zero
+
+Prereqs (one-time): **Xcode** from Mac App Store, **Apple ID** signed in (free Personal Team works; paid Apple Developer Program unlocks `com.apple.developer.kernel.increased-memory-limit` + `extended-virtual-addressing` for Gemma 4 E4B full size).
 
 ```bash
-# build cactus-ios.xcframework
-cd cactus && source ./setup && cactus build --apple
+brew install xcodegen
+sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+sudo xcodebuild -license accept
+```
 
-# generate Xcode project
-cd ../saratoga/ios
+Build the Apple xcframework + patch its module map (needed for Swift `import cactus`):
+
+```bash
+cd cactus && source ./setup && cactus build --apple
+for dir in cactus/apple/cactus-ios.xcframework/ios-arm64/cactus.framework \
+           cactus/apple/cactus-ios.xcframework/ios-arm64-simulator/cactus.framework; do
+  mkdir -p "$dir/Modules"
+  cp cactus/apple/module.modulemap "$dir/Modules/module.modulemap"
+done
+```
+
+Generate Xcode project:
+
+```bash
+cd saratoga/ios
+cp ../../cactus/apple/Cactus.swift SaratogaApp/CactusSwift.swift
 xcodegen generate
 open Saratoga.xcodeproj
-# select Team + bundle ID, Cmd+R to your iPhone
-# transfer weights-apple/* into Saratoga Documents via Finder File Sharing
 ```
+
+In Xcode: project → **Signing & Capabilities** → select your Team, set Bundle Identifier unique (e.g. `com.saratoga.app.<initials>`). Connect iPhone via USB, trust computer. **Cmd+R** to build + install. First run on phone: Settings → General → VPN & Device Management → trust your Apple ID.
+
+Transfer weights (iOS doesn't support `adb push`):
+
+```bash
+# Mac: pull the Apple-format weights bundle (already in the repo if you ran the Mac dev loop above)
+python - <<'PY'
+from huggingface_hub import hf_hub_download
+import zipfile, shutil
+from pathlib import Path
+out = Path('../../weights-apple'); out.mkdir(exist_ok=True)
+for repo, zipname, name in [
+    ("Cactus-Compute/gemma-4-E2B-it", "weights/gemma-4-e2b-it-int4-apple.zip", "gemma-4-e2b-it"),
+    ("Cactus-Compute/Qwen3-Embedding-0.6B", "weights/qwen3-embedding-0.6b-int4.zip", "qwen3-embedding-0.6b"),
+    ("Cactus-Compute/moonshine-base", "weights/moonshine-base-int4-apple.zip", "moonshine-base"),
+]:
+    t = out / name
+    if t.exists(): continue
+    p = hf_hub_download(repo_id=repo, filename=zipname)
+    t.mkdir()
+    with zipfile.ZipFile(p) as z: z.extractall(t)
+    inner = list(t.iterdir())
+    if len(inner) == 1 and inner[0].is_dir():
+        for f in inner[0].iterdir(): shutil.move(str(f), t)
+        inner[0].rmdir()
+PY
+```
+
+Bundle the precomputed corpus index into the app (one time):
+
+```bash
+cd saratoga
+python seed_corpus.py    # generates corpus_index.npz
+python - <<'PY'
+import numpy as np, json
+d = np.load('corpus_index.npz', allow_pickle=True)
+chunks = json.loads(str(d['meta']))
+out = {'chunks': chunks, 'dim': int(d['embeddings'].shape[1]),
+       'vectors': d['embeddings'].astype('float32').tolist()}
+json.dump(out, open('ios/SaratogaApp/Resources/corpus_index.json','w'))
+PY
+cd ios && xcodegen generate
+# rebuild in Xcode (Cmd+R)
+```
+
+Transfer weights onto the phone via **Finder → iPhone → Files tab → Saratoga → drag** all three folders from `weights-apple/` into Saratoga (UIFileSharingEnabled is already set in Info.plist).
+
+Launch Saratoga on phone → **LOAD MODELS** → speaker-tagged encounter → **END ENCOUNTER**.
+
+> **Free Apple Developer tier limits**: Gemma 4 E4B (~8 GB) needs the `increased-memory-limit` + `extended-virtual-addressing` entitlements, which require a paid Apple Developer Program membership (not yet active after payment = wait 24–48 h). On free Personal Team, Saratoga uses **Gemma 4 E2B** (~6 GB with mlpackage ANE assets) automatically; code falls back: `e2b` if `e4b` isn't present.
 
 ---
 
