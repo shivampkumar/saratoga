@@ -1,0 +1,3 @@
+{"t_iso": "2026-04-18T21:43:01Z", "kind": "transcript", "text": "authority: Good evening, do you know why I stopped you?", "prev_hash": "GENESIS", "hash": "e8c9bddda5a958c0bd115abac6758b329a3ecd495514544bc7403cfef142f5bb"}
+{"t_iso": "2026-04-18T21:43:02Z", "kind": "extracted", "text": "{\"demand_type\": \"question\", \"surface\": \"none\"}", "prev_hash": "e8c9bddda5a958c0bd115abac6758b329a3ecd495514544bc7403cfef142f5bb", "hash": "91027fe61fcf6d23f03f53439d7f5f5918917c0f1b2944ffbdeb0da26b47d68d"}
+{"t_iso": "2026-04-18T21:43:10Z", "kind": "whisper", "text": "Say: \"I'm going to remain silent.\" [stop_remain_silent]", "prev_hash": "91027fe61fcf6d23f03f53439d7f5f5918917c0f1b2944ffbdeb0da26b47d68d", "hash": "5c60fa875ac2d1ff6a72abb0ca7aea0761ad8b8b9603341f7b1314ffac93d107"}

@@ -1,0 +1,5 @@
+# Extra deps beyond cactus venv.
+# Run inside cactus venv (source ../cactus/setup) then pip install -r requirements.txt
+sounddevice>=0.5.0
+numpy
+google-genai

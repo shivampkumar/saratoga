@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Saratoga" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">#E11D48</item>
+        <item name="colorPrimaryDark">#9F1239</item>
+        <item name="colorAccent">#FBBF24</item>
+    </style>
+</resources>
