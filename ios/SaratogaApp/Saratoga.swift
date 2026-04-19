@@ -39,39 +39,19 @@ final class Saratoga {
     ]
 
     private let combinedSystem = """
-    You are Saratoga, an on-device clinical co-pilot. A clinician is seeing a patient.
-    Given the transcript and retrieved guideline chunks for up to three tasks, emit
-    EXACTLY these three sections in this order. Use 'none' for any section with no
-    relevant chunks.
-
-    Formatting rules (strict):
-    - Plain text only. NO LaTeX.
-    - Numbers as plain digits or words (50, RR 58, SpO2 90%).
-    - Cite chunk ids in [brackets].
-    - MUST-RULE-OUT: only conditions the transcript raises suspicion for.
-    - In ACTION, include specific drugs with doses when the chunk provides them.
+    Clinical co-pilot. Emit 3 sections. Plain text, no LaTeX. Cite [chunk_id].
 
     ## DDX
-    1. <condition> — <key feature> [chunk_id]
-    2. <condition> — <key feature> [chunk_id]
-    3. <condition> — <key feature> [chunk_id]
-    MUST-RULE-OUT:
-    * <item> [chunk_id]
-    * <item> [chunk_id]
+    1-3 ranked differential items
+    MUST-RULE-OUT: 1-2 items
 
     ## RED FLAG
-    ALERT: <condition> [chunk_id]
-    ACTION:
-    * <specific step>
-    * <specific step>
-    * <specific step>
+    ALERT + 3 actions
 
     ## MED REC
-    MED FLAG: <drug(s)>
-    RISK: <one line> [chunk_id]
-    ACTION: <one line>
+    FLAG + RISK + ACTION
 
-    Under 200 words total. No preamble. Stop after MED REC.
+    Max 120 words.
     """
 
     init(documentsURL: URL) {
@@ -218,19 +198,19 @@ final class Saratoga {
                              onSection: ((String, String) -> Void)?) throws -> [String: String] {
         try ensureReason()
         guard let reason = reason else { return [:] }
+        // Aggressive trim: 1 chunk per τ, 100 chars, to keep prefill < 200 tokens
+        // (iPhone 15 Pro CPU prefill ~10 tok/s → 200 tokens = 20s).
         let blocks = fired.map { tau -> String in
-            let hits = Array((perTau[tau] ?? []).prefix(2))
-            let lines = hits.map { "- [\($0.chunk.id)] \(String($0.chunk.text.prefix(180)))" }
-                .joined(separator: "\n")
-            return "\(labels[tau] ?? tau):\n\(lines)"
-        }.joined(separator: "\n\n")
-        let user = "Transcript:\n\"\(utterance)\"\n\n\(blocks)\n\nEmit the three sections."
+            guard let top = perTau[tau]?.first else { return "" }
+            return "[\(top.chunk.id)] \(String(top.chunk.text.prefix(100)))"
+        }.joined(separator: "\n")
+        let user = "Transcript: \(utterance)\n\nChunks:\n\(blocks)"
         let messages: [[String: String]] = [
             ["role": "system", "content": combinedSystem],
             ["role": "user", "content": user]
         ]
         let messagesJson = String(data: try JSONSerialization.data(withJSONObject: messages), encoding: .utf8)!
-        let opts = "{\"max_tokens\":260,\"temperature\":0.2}"
+        let opts = "{\"max_tokens\":180,\"temperature\":0.2}"
 
         var buf = ""
         let headerRe = try NSRegularExpression(pattern: "(?m)^##\\s+(DDX|RED FLAG|MED REC)\\b.*$")
@@ -300,6 +280,10 @@ final class Saratoga {
         return t
     }
 
+    /// When true, skip E2B compose — return RAG chunk text directly.
+    /// Crucial for iPhone 15 Pro free-dev tier where LLM prefill is slow (CPU path).
+    var quickOnly: Bool = false
+
     func handle(utterance: String,
                 onQuick: ((String, String, Float, String) -> Void)? = nil,
                 onSection: ((String, String) -> Void)? = nil) throws -> Outcome {
@@ -315,9 +299,18 @@ final class Saratoga {
             append(kind: "quick:\(tau)", text: "\(top.chunk.id) s=\(top.score)")
             onQuick?(tau, top.chunk.id, top.score, preview)
         }
-        let cards = firedTaus.isEmpty
-            ? [:]
-            : try composeAll(utterance: utterance, perTau: perTau, fired: firedTaus, onSection: onSection)
+        let cards: [String: String]
+        if quickOnly {
+            // RAG-only: use top chunk text verbatim as the card body (no LLM).
+            cards = Dictionary(uniqueKeysWithValues: firedTaus.compactMap { tau in
+                guard let top = perTau[tau]?.first else { return nil }
+                return (tau, "[\(top.chunk.id)]\n\(top.chunk.text)")
+            })
+        } else {
+            cards = firedTaus.isEmpty
+                ? [:]
+                : try composeAll(utterance: utterance, perTau: perTau, fired: firedTaus, onSection: onSection)
+        }
         let fired: [TaskOutput] = firedTaus.compactMap { tau in
             guard let card = cards[tau] else { return nil }
             let top = perTau[tau]?.first

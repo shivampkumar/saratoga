@@ -17,6 +17,7 @@ struct ContentView: View {
     @State private var loading = false
     @State private var asrMs: Int = 0
     @State private var totalMs: Int = 0
+    @State private var quickMode: Bool = false
 
     private let recorder = Recorder()
     @State private var asr: Asr?
@@ -66,6 +67,16 @@ struct ContentView: View {
 
     private var buttons: some View {
         VStack(spacing: 6) {
+            Toggle(isOn: $quickMode) {
+                Text(quickMode ? "QUICK MODE · RAG only (<1s)" : "DEEP MODE · E2B reasoning")
+                    .font(.system(size: 11, weight: .bold, design: .monospaced))
+                    .foregroundColor(quickMode ? .green : .orange)
+                    .kerning(1.5)
+            }
+            .toggleStyle(SwitchToggleStyle(tint: .orange))
+            .onChange(of: quickMode) { newValue in
+                saratoga?.quickOnly = newValue
+            }
             if !ready {
                 Button(action: onLoad) {
                     Text("LOAD MODELS")
@@ -208,6 +219,7 @@ struct ContentView: View {
                 try s.load(weightsDir: dir)
                 await MainActor.run {
                     self.asr = a; self.saratoga = s
+                    s.quickOnly = quickMode
                     ready = true; status = "ready"; loading = false
                     fhirN = s.syncQueueSize()
                 }
