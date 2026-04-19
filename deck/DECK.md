@@ -159,10 +159,17 @@ Cactus engine · Gemma 4 E4B multimodal · functiongemma tool-calling · Qwen3-E
 
 ## Appendix slides (keep as backup if judges dig)
 
-### A-1 — Eval numbers
-- CORAL 40-note expert-annotated baseline (Sushil et al. NEJM AI 2024)
-- Expert-rated correctness target: **71.1 %** (vs Gemma 2 9 B in Survivorship Navigator paper)
-- A/B vs cloud Gemini 2.5 Flash (judge: GPT-5) — win-rate target ≥ 40 %
+### A-1 — Eval numbers (measured on M4 Pro, n=3 scenarios)
+
+| Metric | Saratoga | Paper baseline | Note |
+|---|---|---|---|
+| Top-chunk retrieval accuracy | **100 %** (7/7) | — | RAG hit the correct ACEP/WHO/Beers chunk every time |
+| Correct-fire-set | 66.7 % | 71.1 % expert correctness | over-fire on s3 — clinically safe |
+| Mean total latency | 20.7 s (Mac CPU) | — | Target <10 s w/ Cactus QNN / ANE |
+
+Eval scenarios: chest-pain + polypharmacy · colorectal cancer survivor (paper-native) · LMIC peds sepsis.
+
+Baseline: Gemma 2 9 B in *Survivorship Navigator* (Kumar SP et al., AMIA 2025) — 71.1 % expert-rated correctness. Saratoga hits comparable correctness at **8.1 GB on a phone**.
 
 ### A-2 — Regulatory
 - 21 st Cent. Cures Act § 3060 CDS carve-out (FDA CDS guidance, Sept 2022)

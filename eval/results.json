@@ -1,0 +1,139 @@
+{
+  "results": [
+    {
+      "scenario": "s1_chest_pain_polypharmacy",
+      "description": "Rural primary care \u2014 chest pain + polypharmacy",
+      "gate_ms": 491.6,
+      "llm_ms": 19350.2,
+      "total_ms": 19841.8,
+      "fired": [
+        "tau1",
+        "tau3",
+        "tau4"
+      ],
+      "expected_fires": [
+        "tau1",
+        "tau3",
+        "tau4"
+      ],
+      "correct_fire_set": true,
+      "extra_fires": [],
+      "missing_fires": [],
+      "top_chunks": {
+        "tau1": {
+          "id": "ddx_acs",
+          "score": 0.782
+        },
+        "tau3": {
+          "id": "rf_hypertensive_emergency",
+          "score": 0.735
+        },
+        "tau4": {
+          "id": "med_asa_missing_acs",
+          "score": 0.759
+        }
+      },
+      "top_chunk_match": {
+        "tau1": true,
+        "tau4": true,
+        "tau3": true
+      },
+      "sections": {
+        "tau1": "1. Acute coronary syndrome (ACS / MI) \u2014 chest pain radiating to jaw, diabetes [ddx_acs]\nMUST-RULE-OUT:\n*   Hypertensive emergency with chest pain [rf_hypertensive_emergency]\n*   Aortic dissection \u2014 sudden onset chest pain with high BP [ddx_aortic_dissection]",
+        "tau3": "ALERT: HYPERTENSIVE EMERGENCY. BP 180/110 + chest pain [rf_hypertensive_emergency]\nACTION:\n*   Reduce MAP 20\u201325% over first hour.\n*   Assess for other signs of end-organ damage.",
+        "tau4": "MED FLAG: Ciprofloxacin, Aspirin (missing)\nRISK: Unprescribed ciprofloxacin poses risks for interactions and inappropriate use. [none]\nACTION: Administer aspirin 162-325 mg chewed for suspected ACS; assess ciprofloxacin's indication and interactions. [med_asa_missing_acs]"
+      }
+    },
+    {
+      "scenario": "s2_colorectal_survivor",
+      "description": "Cancer survivor 3-yr surveillance (paper-native)",
+      "gate_ms": 94.1,
+      "llm_ms": 19676.0,
+      "total_ms": 19770.1,
+      "fired": [
+        "tau1",
+        "tau3",
+        "tau4"
+      ],
+      "expected_fires": [
+        "tau1",
+        "tau3",
+        "tau4"
+      ],
+      "correct_fire_set": true,
+      "extra_fires": [],
+      "missing_fires": [],
+      "top_chunks": {
+        "tau1": {
+          "id": "ddx_polypharmacy_geriatric",
+          "score": 0.745
+        },
+        "tau3": {
+          "id": "rf_gi_bleed",
+          "score": 0.699
+        },
+        "tau4": {
+          "id": "med_anticoag_bleeding",
+          "score": 0.737
+        }
+      },
+      "top_chunk_match": {
+        "tau1": true,
+        "tau4": true,
+        "tau3": true
+      },
+      "sections": {
+        "tau3": "ALERT: ACUTE GI BLEED [rf_gi_bleed]\nACTION:\n* Establish 2 large-bore IVs\n* Type u0026 crossmatch 4 units of blood\n* Transfuse if Hgbu003c7 (or u003c8 if cardiac)",
+        "tau4": "MED FLAG: Aspirin\nRISK: Active malignancy with"
+      }
+    },
+    {
+      "scenario": "s3_peds_sepsis_imci",
+      "description": "LMIC pediatric sepsis (WHO IMCI)",
+      "gate_ms": 81.0,
+      "llm_ms": 22379.3,
+      "total_ms": 22460.2,
+      "fired": [
+        "tau1",
+        "tau3",
+        "tau4"
+      ],
+      "expected_fires": [
+        "tau1",
+        "tau3"
+      ],
+      "correct_fire_set": false,
+      "extra_fires": [
+        "tau4"
+      ],
+      "missing_fires": [],
+      "top_chunks": {
+        "tau1": {
+          "id": "ddx_peds_fever_high_risk",
+          "score": 0.851
+        },
+        "tau3": {
+          "id": "rf_peds_danger_signs",
+          "score": 0.856
+        },
+        "tau4": {
+          "id": "med_asa_missing_acs",
+          "score": 0.68
+        }
+      },
+      "top_chunk_match": {
+        "tau1": true,
+        "tau3": true
+      },
+      "sections": {
+        "tau1": "1. Sepsis / septic shock \u2014 suspected infection with tachypnea, hypoxemia, prolonged capillary refill, and seizure [ddx_sepsis]\n2. Pediatric fever, high-risk group \u2014 11-month-old with severe signs including inability to breastfeed and seizure [ddx_peds_fever_high_risk]\nMUST-"
+      }
+    }
+  ],
+  "summary": {
+    "n_scenarios": 3,
+    "pct_correct_fire_set": 66.7,
+    "pct_top_chunk_match": 100.0,
+    "mean_total_ms": 20691.0
+  }
+}
