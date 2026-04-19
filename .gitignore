@@ -1,3 +1,10 @@
+# Private pitch + working notes
+deck/real_pitch.md
+deck/*.key
+deck/*.pptx
+deck/drafts/
+notes/
+
 __pycache__/
 *.pyc
 *.pyo
